@@ -241,6 +241,8 @@ delete from  business_bi."QTKFGLB_FACT_QGTRQCLTJB_BASIN";
  * 财务部相关
  */
 
+--
+
 --财务简报数据表结构
 CREATE TABLE business_bi."CWB_FACT_DOCUMENT_LIST" (
 	document_uuid	varchar(255) NOT NULL,
@@ -249,6 +251,50 @@ CREATE TABLE business_bi."CWB_FACT_DOCUMENT_LIST" (
 	update_user varchar(255) NOT NULL,
 	remark varchar(255) NULL
 );
+
+--参股单位财务数据总览
+CREATE TABLE business_bi."CWB_FINANCIAL_SUMMARY" (
+	lbzd_mc varchar(255) NOT NULL,
+	bbzd_date varchar(255) NOT NULL,
+	total_revenue numeric DEFAULT 0 null,
+	total_profit numeric DEFAULT 0 null,
+	net_profit numeric DEFAULT 0 null,
+	total_cost numeric DEFAULT 0 null,
+	comm_vol numeric DEFAULT 0 null,
+	data_uuid varchar(255) NOT NULL,
+	creater_user varchar(255) NULL,
+	creater_time varchar(255) NULL,
+	update_user varchar(255) NULL,
+	update_time varchar(255) NULL,
+	remark varchar(255) NULL
+);
+
+insert into business_bi."CWB_FINANCIAL_SUMMARY" (lbzd_mc,bbzd_date,total_revenue,total_profit,net_profit,total_cost,comm_vol,data_uuid)
+select a.lbzd_mc,a.bbzd_date,
+	   a.销售及其它营业收入,
+	   a.税前利润,
+	   a.净利润（亏损）,
+	   a.完全成本,
+	   0,
+	   gen_random_uuid()
+from v_income_statement_summary a
+where 1 = 1;
+
+
+select a.lbzd_mc,
+	   a.bbzd_date,
+	   coalesce(a.total_revenue,b.销售及其它营业收入,0) total_revenue,
+	   coalesce(a.total_profit,b.税前利润,0) total_profit,
+	   coalesce(a.net_profit,b.净利润（亏损）,0) net_profit,
+	   coalesce(a.total_cost,b.完全成本,0) total_cost,
+	   a.comm_vol,
+	   a.data_uuid
+from business_bi."CWB_FINANCIAL_SUMMARY" a
+left join v_income_statement_summary b on a.lbzd_mc = b.lbzd_mc and a.bbzd_date = b.bbzd_date
+where 1 = 1
+and a.lbzd_mc = '${company}'
+and left(a.bbzd_date,4) = '${year}'
+
 --参股公司利润表结构
 CREATE TABLE business_bi."CWB_PROFIT_COMPANY" (	
 	BBZD_MC varchar(255) NOT null,
